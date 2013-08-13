@@ -7,11 +7,16 @@
 
 #include <set>
 
+#include <ordering/MinimumDegree.h>
 #include <ordering/Ordering.h>
 
 #include <util/IO.h>
 #include <util/StatsCounter.h>
 #include <util/STLUtil.h>
+
+// FIXME:
+//#include <mkl_types.h>
+//#include <mkl_cblas.h>
 
 #ifdef USE_MKL
 #include <mkl_types.h>
@@ -6573,14 +6578,12 @@ void Supernode::ExtendSystemAppend( vector<Supernode> &nodes,
   printf( "Added %d nodes.\n", (int)newSystem.size() - (int)oldSize );
   printf( "New system has %d nodes.\n", (int)newSystem.size() );
 
-#if 0
   // Do variable reordering, provided that we have estimates for
   // extended variable sizes
   if ( estimator )
   {
     ReorderExtendedVariables( newSystem, interactionSets, oldSize );
   }
-#endif
 
   // Add interaction sets for each extended node, and propagate fill in
   interactionSets.resize( newSystem.size() );
@@ -6603,6 +6606,161 @@ void Supernode::ExtendSystemAppend( vector<Supernode> &nodes,
   // Now, add all new interactions to the system.  This will
   // also set up some local variables in the interactions themselves.
   addExtendedInteractions( newSystem, interactionSets, oldSize );
+}
+
+//////////////////////////////////////////////////////////////////////
+// Performs symbolic reordering of the extended variable space to
+// reduce fill-in.  This modifies the given interaction sets
+//////////////////////////////////////////////////////////////////////
+void Supernode::ReorderExtendedVariables(
+                      vector<Supernode> &nodes,
+                      vector<set<SupernodeInteraction> > &interactionSets,
+                      int oldSystemSize )
+{
+  vector<set<int> >          schurInteractions;
+#if 0
+  vector<set<int> >          offDiagonalInteractions( oldSystemSize );
+#endif
+  vector<IntArray>           offDiagonalInteractions( oldSystemSize );
+  vector<vector<IndexRange> > offDiagonalColumnRanges( oldSystemSize );
+  IntArray                   blockSizes( nodes.size() - oldSystemSize );
+  IntArray                   permutation;
+  IntArray                   inversePermutation;
+
+  TRACE_ASSERT( interactionSets.size() == oldSystemSize,
+                "System must be reordered before extended interaction sets"
+                " are built" );
+
+  // Set up block sizes using the estimates for each extended node
+  for ( int node_idx = oldSystemSize; node_idx < nodes.size(); node_idx++ )
+  {
+    int                      sizeEstimate = nodes[ node_idx ]._sizeEstimate;
+
+    TRACE_ASSERT( sizeEstimate > 0 );
+
+    blockSizes.at( node_idx - oldSystemSize ) = sizeEstimate;
+
+#if 0
+    printf( "Block size for extended node %d = %d\n",
+            node_idx - oldSystemSize, sizeEstimate );
+#endif
+
+    // Reset the size estimate to zero - we don't need it anymore
+    nodes[ node_idx ]._sizeEstimate = 0;
+  }
+
+  // Build index lists for the off-diagonal interactions already
+  // present in the standard node set
+  for ( int node_idx = 0; node_idx < oldSystemSize; node_idx++ )
+  {
+    set<SupernodeInteraction> &interactions = interactionSets[ node_idx ];
+#if 0
+    set<int> &interactionIndices = offDiagonalInteractions[ node_idx ];
+
+    for ( set<SupernodeInteraction>::iterator iter = interactions.begin();
+          iter != interactions.end(); iter++ )
+    {
+      interactionIndices.insert( iter->_nodeID );
+    }
+#endif
+    IntArray &interactionIndices = offDiagonalInteractions[ node_idx ];
+    vector<IndexRange> &interactionColumnRanges
+                                    = offDiagonalColumnRanges[ node_idx ];
+
+    for ( set<SupernodeInteraction>::iterator iter = interactions.begin();
+          iter != interactions.end(); iter++ )
+    {
+      interactionIndices.push_back( iter->_nodeID );
+
+      if ( iter->_lowRankDiagonalInteraction )
+      {
+        interactionColumnRanges.push_back( iter->_compressedColumnRange );
+      }
+      else
+      {
+        interactionColumnRanges.push_back( IndexRange( 0, 0 ) );
+      }
+    }
+  }
+
+  // Build the schur complement interaction set
+  Ordering::BuildBlockSchurComplement( offDiagonalInteractions,
+                                       schurInteractions,
+                                       oldSystemSize, /* start index */
+                                       nodes.size(), /* end index */
+                                       &offDiagonalColumnRanges );
+
+  MinimumDegree::BlockMinimumDegree( schurInteractions, blockSizes,
+                                     permutation, inversePermutation );
+
+  // Diagnostic: print out usage
+  MinimumDegree::PrintBlockOrderingStats( schurInteractions, blockSizes,
+                                          permutation, inversePermutation );
+
+  // Use the permutation to renumber all interactions in the extended set
+  for ( int node_idx = 0; node_idx < oldSystemSize; node_idx++ )
+  {
+    set<SupernodeInteraction> &oldInteractions = interactionSets[ node_idx ];
+    set<SupernodeInteraction>  newInteractions;
+
+    Supernode                 &node = nodes[ node_idx ];
+
+    for ( set<SupernodeInteraction>::iterator iter = oldInteractions.begin();
+          iter != oldInteractions.end(); iter++ )
+    {
+      int                      oldNodeID = iter->_nodeID;
+      int                      newNodeID;
+
+      // Express this relative to the start of the extended variable space
+      oldNodeID -= oldSystemSize;
+
+      // Look up the new relative index in the permutation
+      newNodeID = inversePermutation.at( oldNodeID );
+
+      // Put this back in to full variable space
+      newNodeID += oldSystemSize;
+
+      SupernodeInteraction   interactionCopy = *iter;
+
+      interactionCopy._nodeID = newNodeID;
+
+      newInteractions.insert( interactionCopy );
+    }
+
+    // Now that we've built a new interaction set, we can just replace
+    // the old one.
+    oldInteractions = newInteractions;
+
+    // Apply permutation to any extended offsets stored in the
+    // standard part of the factorization
+    for ( int interaction_idx = 0; interaction_idx < node._offDiagonal.size();
+          interaction_idx++ )
+    {
+      SupernodeInteraction  &interaction = node._offDiagonal[ interaction_idx ];
+
+      if ( interaction._active )
+      {
+        // Nothing to be done here
+        continue;
+      }
+
+      TRACE_ASSERT( interaction._extendedOffset > 0,
+                    "No extended offset found in inactive interaction" );
+
+      int                    oldNodeID;
+      int                    newNodeID;
+      
+      oldNodeID = node_idx + interaction._extendedOffset;
+
+      // Express this relative to the start of the extended variable space
+      // and permute
+      oldNodeID -= oldSystemSize;
+      newNodeID = inversePermutation.at( oldNodeID );
+      newNodeID += oldSystemSize;
+
+      interaction._extendedOffset = newNodeID - node_idx;
+    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////

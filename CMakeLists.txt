@@ -253,6 +253,7 @@ set(CSPARSE_INTERFACE_SRC
 # and CSparse)
 #===================================================================
 set(ORDERING_SRC
+    src/ordering/MinimumDegree.cpp
     src/ordering/NestedDissection.cpp
     src/ordering/Ordering.cpp)
 

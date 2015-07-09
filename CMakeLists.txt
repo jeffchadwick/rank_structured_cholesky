@@ -110,6 +110,14 @@ find_package(Cholmod REQUIRED)
 option(BUILD_PCG_SOLVER
        "Compile PCG solver"                               ON)
 
+option(USE_ZLIB
+       "Build with zlib"                                  ON)
+
+if ( USE_ZLIB )
+  FIND_PACKAGE(ZLIB REQUIRED)
+  SET(HAS_ZLIB 1)
+endif ( USE_ZLIB )
+
 #===================================================================
 # Source lists
 #===================================================================
@@ -182,6 +190,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${Boost_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIRS}
   ${BLAS_INCLUDE_DIR}
   ${LAPACK_INCLUDE_DIR}
   ${CHOLMOD_INCLUDE_DIR})
@@ -208,7 +217,9 @@ if ( BUILD_PCG_SOLVER )
                  ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
 
   target_link_libraries(pcg_solver
-                        ${BLAS_LAPACK_LIBS}       ${CHOLMOD_LIBRARIES})
+    ${BLAS_LAPACK_LIBS}
+    ${CHOLMOD_LIBRARIES}
+    ${ZLIB_LIBRARIES})
 
 endif ( BUILD_PCG_SOLVER )
 

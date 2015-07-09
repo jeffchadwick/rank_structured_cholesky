@@ -300,7 +300,7 @@ void CHOLMOD_Environment::nestedDissection( SeparatorList &separators,
 
   IntArray                   inversePermutation;
 
-  UF_long                    numComponents;
+  // UF_long                    numComponents;
 
   int                        currentComponent = 0;
 
@@ -310,7 +310,7 @@ void CHOLMOD_Environment::nestedDissection( SeparatorList &separators,
   cParent = new int[ _matrix->nrow ];
   cMember = new int[ _matrix->nrow ];
 
-  numComponents = cholmod_nested_dissection( _matrix, NULL, 0,
+  auto numComponents = cholmod_nested_dissection( _matrix, NULL, 0,
                                              perm, cParent, cMember,
                                              &_common );
 

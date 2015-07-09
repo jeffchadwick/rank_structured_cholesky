@@ -1,0 +1,21 @@
+#!/bin/bash
+
+module purge
+module load localbase
+module load gcc-4.9.3
+module load openblas
+module load lapack
+
+export CMAKE_LIBRARY_PATH=$LIBRARY_PATH
+export CMAKE_INCLUDE_PATH=$CPATH
+
+PREFIX=$HOME/local
+BASEDIR=`echo $0 | sed 's/[^/]*$//'`
+BASEDIR=$BASEDIR..
+
+cmake \
+  -D USE_MKL:BOOL=OFF \
+  -D BLAS_LIBRARIES:FILEPATH="-lopenblas" \
+  $BASEDIR
+
+make

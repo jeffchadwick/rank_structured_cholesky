@@ -56,14 +56,18 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
       IF(APPLE) 
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 ENV 
-          DYLD_LIBRARY_PATH 
+          PATHS ${CBLAS_LIBRARY_DIR}
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64
+          PATHS ENV LIBRARY_PATH
+          PATHS ENV DYLD_LIBRARY_PATH 
           )
       ELSE(APPLE)
         FIND_LIBRARY(${_prefix}_${_library}_LIBRARY
           NAMES ${_library}
-          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64 ENV 
-          LD_LIBRARY_PATH 
+          PATHS ${CBLAS_LIBRARY_DIR} ${CBLAS_DIR}/lib
+          PATHS /usr/local/lib /usr/lib /usr/local/lib64 /usr/lib64
+          PATHS ENV LIBRARY_PATH
+          PATHS ENV LD_LIBRARY_PATH
           )
       ENDIF(APPLE)
       MARK_AS_ADVANCED(${_prefix}_${_library}_LIBRARY)
@@ -79,7 +83,8 @@ MACRO(CHECK_ALL_LIBRARIES LIBRARIES _prefix _name _flags _list _include _search_
   # Test include
   SET(_bug_search_include ${_search_include}) #CMAKE BUG!!! SHOULD NOT BE THAT
   IF(_bug_search_include)
-    FIND_PATH(${_prefix}${_combined_name}_INCLUDE ${_include} ${_paths})
+    FIND_PATH(${_prefix}${_combined_name}_INCLUDE ${_include} ${_paths}
+              PATHS ${CBLAS_INCLUDE_DIR} ${CBLAS_DIR}/include ENV INCLUDE)
     MARK_AS_ADVANCED(${_prefix}${_combined_name}_INCLUDE)
     IF(${_prefix}${_combined_name}_INCLUDE)
       MESSAGE(STATUS "Checking for [${__list}] -- includes found")

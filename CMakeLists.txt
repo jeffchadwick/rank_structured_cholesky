@@ -101,111 +101,14 @@ else ( USE_MKL )
 
 endif ( USE_MKL )
 
-# Look for Deal.II
-option(BUILD_WITH_DEALII "Build Deal.II examples" OFF)
-
-if ( BUILD_WITH_DEALII )
-  find_package(Deal.II 7.2 REQUIRED)
-endif ( BUILD_WITH_DEALII )
-
 # Look for CHOLMOD
 find_package(Cholmod REQUIRED)
-
-# DSB: Use librt?
-option(USE_LIBRT "Build with librt" OFF)
-if ( USE_LIBRT )
-  set(RT_LIBRARY rt)
-endif ( USE_LIBRT )
-
-# DSB: Use zlib?
-option(USE_ZLIB "Built with zlib" ON)
-if (USE_ZLIB)
-  find_package(ZLIB REQUIRED)
-  set(HAS_ZLIB 1)
-endif (USE_ZLIB)
 
 #===================================================================
 # Enable/disable compile targets
 #===================================================================
 option(BUILD_PCG_SOLVER
        "Compile PCG solver"                               ON)
-
-# Deal.II's nonlinear elasticity tutorial example, modified
-# to use our solver
-option(BUILD_NONLINEAR_ELASTICITY
-       "Compile nonlinear_elasticity"                     OFF)
-
-# Program for testing our Trilinos solver interface against other
-# preconditioners provided by Trilinos
-option(BUILD_TRILINOS_SOLVER
-       "Compile trilinos_solver"                          OFF)
-
-
-#===================================================================
-# If we are building certain executables, we need to make sure that
-# we have include and library directories for 
-#===================================================================
-if ( BUILD_NONLINEAR_ELASTICITY AND ( NOT TRILINOS_INCLUDE_DIR
-                                      OR NOT TRILINOS_LIB_DIR ) )
-
-  MESSAGE(FATAL_ERROR "Need to specify TRILINOS_INCLUDE_DIR and TRILINOS_LIB_DIR to build nonlinear_elasticity")
-
-endif ()
-
-#===================================================================
-# Set up the TRILINOS library list.  Note that this build system
-# does not explicitly check for the existence of all of these
-# packages.
-#
-# TODO: do we need python2.7 here?
-#===================================================================
-if ( TRILINOS_INCLUDE_DIR AND TRILINOS_LIB_DIR )
-  # FIXME: Need to figure out how to set the library list correctly
-  #set(TRILINOS_LIBS epetra aztecoo teuchoscore teuchosparameterlist ifpack ml)
-
-  if ( NOT TEUCHOS_LIBS )
-    MESSAGE(FATAL_ERROR "No teuchos libraries specified")
-  endif ( NOT TEUCHOS_LIBS )
-
-  set(TRILINOS_LIBS epetra aztecoo ${TEUCHOS_LIBS} ifpack ml)
-endif ( TRILINOS_INCLUDE_DIR AND TRILINOS_LIB_DIR )
-
-
-#===================================================================
-# Depending on how you built Trilinos and/or Deal.II, you may need
-# to also include/link against an MPI implementation
-#
-# Enable or disable this here
-#===================================================================
-option(BUILD_WITH_MPI  "Include and link against MPI"   OFF)
-
-if ( BUILD_WITH_MPI )
-  find_package(MPI REQUIRED)
-endif ( BUILD_WITH_MPI )
-
-
-#===================================================================
-# Similarly, we may need to include and link against PetSC,
-# depending on how Deal.II was built
-#===================================================================
-option(BUILD_WITH_PETSC   "Include and link against PetSC"  OFF)
-
-if ( BUILD_WITH_PETSC )
-  find_package(PETSc REQUIRED)
-endif ( BUILD_WITH_PETSC )
-
-
-#===================================================================
-# Set up the list of libraries necessary for deal.ii
-#
-# TODO: We might also need tbb, netcdf, netcdf_c++ and libz (ugh)
-#===================================================================
-if ( Deal.II_LIBRARY )
-  # We also need to link against ZLIB for Deal.II
-  find_package(ZLIB REQUIRED)
-
-  set(Deal.II_LIBS deal_II tbb)
-endif ( Deal.II_LIBRARY )
 
 #===================================================================
 # Source lists
@@ -279,7 +182,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src
   ${Boost_INCLUDE_DIR}
-  ${ZLIB_INCLUDE_DIRS}
   ${BLAS_INCLUDE_DIR}
   ${LAPACK_INCLUDE_DIR}
   ${CHOLMOD_INCLUDE_DIR})
@@ -306,43 +208,7 @@ if ( BUILD_PCG_SOLVER )
                  ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
 
   target_link_libraries(pcg_solver
-                        ${BLAS_LAPACK_LIBS}       ${CHOLMOD_LIBRARIES}
-                        ${ZLIB_LIBRARIES}         ${RT_LIBRARY})
+                        ${BLAS_LAPACK_LIBS}       ${CHOLMOD_LIBRARIES})
+
 endif ( BUILD_PCG_SOLVER )
 
-if ( BUILD_NONLINEAR_ELASTICITY )
-  # Requires CHOLMOD (for our solver) as well as Trilinos and Deal.II
-  add_executable(nonlinear_elasticity
-                 deal.ii/nonlinear_elasticity/step-44.cpp
-                 ${UTIL_SRC}              ${LINEAR_SRC}
-                 ${SOLVER_SRC}            ${ORDERING_SRC}
-                 ${NODE_SRC}              ${GEOMETRY_SRC}
-                 ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC}
-                 ${Deal.II_UTIL_SRC}
-                 ${TRILINOS_UTIL_SRC}     ${TRILINOS_SOLVER_SRC})
-
-  target_link_libraries(nonlinear_elasticity
-                        ${BLAS_LAPACK_LIBS}   ${CHOLMOD_LIBRARIES}
-                        ${Deal.II_LIBS}       ${TRILINOS_LIBS}
-                        ${MPI_CXX_LIBRARIES}  ${PETSC_LIBRARIES}
-                        ${ZLIB_LIBRARIES}     
-                        ${RT_LIBRARY})
-
-endif ( BUILD_NONLINEAR_ELASTICITY )
-
-if ( BUILD_TRILINOS_SOLVER )
-  add_executable(trilinos_solver
-                 trilinos/testML.cpp
-                 ${UTIL_SRC}              ${LINEAR_SRC}
-                 ${SOLVER_SRC}            ${ORDERING_SRC}
-                 ${NODE_SRC}              ${GEOMETRY_SRC}
-                 ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC}
-                 ${TRILINOS_UTIL_SRC}     ${TRILINOS_SOLVER_SRC})
-
-  target_link_libraries(trilinos_solver
-                        ${BLAS_LAPACK_LIBS}   ${CHOLMOD_LIBRARIES}
-                        ${TRILINOS_LIBS}      ${MPI_CXX_LIBRARIES}
-                        ${ZLIB_LIBRARIES}     
-                        ${RT_LIBRARY})
-
-endif ( BUILD_TRILINOS_SOLVER )

@@ -9957,7 +9957,8 @@ void FactorManager::identifyInteriorBlocks()
 
     _interiorBlockMap[ end_idx ] = EMPTY;
 
-    while ( _factor[ end_idx ].type() == STANDARD_NODE
+    while ( end_idx < _factor.size()
+         && _factor[ end_idx ].type() == STANDARD_NODE
          && !_factor[ end_idx ].compressOffDiagonal() )
     {
       _interiorBlockMap[ end_idx ] = (int)_interiorBlocks.size();

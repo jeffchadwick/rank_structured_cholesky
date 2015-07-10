@@ -2140,7 +2140,8 @@ void FactorManager::initDecompositionWorkspace()
           (int)_factor.size(), (int)_lowRankDescendents.size() );
 
   _extendedSolveWorkspaceSz = maxRank * _numExtendedNodes;
-  _extendedSolveWorkspace = new Real[ _extendedSolveWorkspaceSz ];
+  if (_extendedSolveWorkspaceSz > 0)
+    _extendedSolveWorkspace = new Real[ _extendedSolveWorkspaceSz ];
 
   floatWorkTotalSize += _extendedSolveWorkspaceSz * sizeof( Real );
 
@@ -2206,7 +2207,8 @@ void FactorManager::initDecompositionWorkspace()
 
   //_decompMultTransWorkspaceSz = maxNodeSize * maxRank;
   _decompMultTransWorkspaceSz = maxTransBlockSize;
-  _decompMultTransWorkspace = new Real[ _decompMultTransWorkspaceSz ];
+  if (_decompMultTransWorkspaceSz > 0)
+    _decompMultTransWorkspace = new Real[ _decompMultTransWorkspaceSz ];
 
   floatWorkTotalSize += _decompMultTransWorkspaceSz * sizeof( Real );
   floatWorkUsage[ "decomp. mult. trans. workspace" ]
@@ -2251,8 +2253,10 @@ void FactorManager::initDecompositionWorkspace()
   _vectorWorkSz = max( _vectorWorkSz, maxVectorSize );
   _vectorWork1Sz = _vectorWorkSz;
   _vectorWork2Sz = _vectorWorkSz;
-  _vectorWork1 = new Real[ _vectorWorkSz ];
-  _vectorWork2 = new Real[ _vectorWorkSz ];
+  if (_vectorWorkSz > 0) {
+    _vectorWork1 = new Real[ _vectorWorkSz ];
+    _vectorWork2 = new Real[ _vectorWorkSz ];
+  }
 
   floatWorkTotalSize += 2 * _vectorWorkSz * sizeof( Real );
   floatWorkUsage[ "vector workspace" ] += 2 * _vectorWorkSz * sizeof( Real );
@@ -2261,7 +2265,10 @@ void FactorManager::initDecompositionWorkspace()
   // FIXME: size change
   _basisWorkspaceSz = maxRows * maxRank;
   //_basisWorkspaceSz = maxRows * maxRank * 2;
-  _basisWorkspace = new Real[ _basisWorkspaceSz ];
+  if ( _basisWorkspace != NULL )
+    delete[] _basisWorkspace;
+  if ( _basisWorkspaceSz > 0 )
+    _basisWorkspace = new Real[ _basisWorkspaceSz ];
 
   floatWorkTotalSize += _basisWorkspaceSz * sizeof( Real );
   floatWorkUsage[ "basis workspace" ] += _basisWorkspaceSz * sizeof( Real );
@@ -2914,7 +2921,7 @@ void FactorManager::clearWorkspace()
   _slackDataOffset = 0;
   _availableSlackData = _slackDataSz;
 
-  if ( _slackData == NULL )
+  if ( _slackData == NULL && _slackDataSz > 0 )
   {
     _slackData = new Real[ _slackDataSz ];
   }

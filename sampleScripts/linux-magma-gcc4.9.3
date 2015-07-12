@@ -17,6 +17,7 @@ BASEDIR=$BASEDIR..
 cmake \
   -D USE_MKL:BOOL=OFF \
   -D BLAS_LIBRARIES:FILEPATH="-lopenblas" \
+  -D CMAKE_INSTALL_PREFIX:PATH="$PREFIX/rsc" \
   $BASEDIR
 
 make

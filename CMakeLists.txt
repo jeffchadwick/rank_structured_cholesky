@@ -213,11 +213,13 @@ link_directories(${Boost_LIBRARY_DIRS}
                  ${MKL_LIBRARY_DIR})
 
 #===================================================================
-# Configure header files
+# Configure and install header files
 #===================================================================
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
+
+install(DIRECTORY src/ DESTINATION include/rsc FILES_MATCHING PATTERN "*.h")
 
 #===================================================================
 # Build libraries
@@ -234,9 +236,17 @@ target_link_libraries(rsclib
   ${CHOLMOD_LIBRARIES}
   ${ZLIB_LIBRARIES})
 
+install(TARGETS rsclib LIBRARY DESTINATION lib)
+
 #===================================================================
 # Build executables
 #===================================================================
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 if ( BUILD_PCG_SOLVER )
 
@@ -246,6 +256,8 @@ if ( BUILD_PCG_SOLVER )
     ${BLAS_LAPACK_LIBS}
     ${CHOLMOD_LIBRARIES}
     ${ZLIB_LIBRARIES})
+
+  install(TARGETS pcg_solver RUNTIME DESTINATION bin)
 
 endif ( BUILD_PCG_SOLVER )
 
@@ -273,3 +285,4 @@ endif ( BUILD_PCG_SOLVER )
 #     ${ZLIB_LIBRARIES})
 
 # endif ( BUILD_PCG_PYTHON )
+

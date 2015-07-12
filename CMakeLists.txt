@@ -19,6 +19,7 @@ option(USE_OPENMP "Turn on the OpenMP feature when compiling" ON)
 #===================================================================
 ## Compiler
 # set compiler flags for debug/release
+
 if ( USE_DEBUG )
   MESSAGE(STATUS "Using debug mode")
   add_definitions(-DDEBUG)
@@ -94,7 +95,7 @@ else ( USE_MKL )
   find_package(LAPACK REQUIRED)
   find_package(LAPACKE REQUIRED)
 
-  set(BLAS_LAPACK_LIBS ${LAPACKE_LIBRARY} 
+  set(BLAS_LAPACK_LIBS ${LAPACKE_LIBRARY}
       ${LAPACK_LIBRARIES} ${CBLAS_LIBRARIES})
   set(BLAS_INCLUDE_DIR ${CBLAS_INCLUDE_DIR})
   set(LAPACK_INCLUDE_DIR ${LAPACKE_INCLUDE_DIR})
@@ -107,8 +108,12 @@ find_package(Cholmod REQUIRED)
 #===================================================================
 # Enable/disable compile targets
 #===================================================================
+
 option(BUILD_PCG_SOLVER
        "Compile PCG solver"                               ON)
+
+option(BUILD_PCG_PYTHON
+       "Compile PCG Python"                               OFF)
 
 option(USE_ZLIB
        "Build with zlib"                                  ON)
@@ -125,6 +130,7 @@ endif ( USE_ZLIB )
 #===================================================================
 # Linear algebra
 #===================================================================
+
 set(LINEAR_SRC
     src/linearalgebra/MATRIX3.cpp
     src/linearalgebra/MATRIX_FAST.cpp
@@ -135,6 +141,7 @@ set(LINEAR_SRC
 #===================================================================
 # General utilities
 #===================================================================
+
 set(UTIL_SRC
     src/util/MathUtil.cpp                     src/util/StatsCounter.cpp)
 
@@ -142,6 +149,7 @@ set(UTIL_SRC
 #===================================================================
 # Solver sources
 #===================================================================
+
 set(SOLVER_SRC
     src/solver/FactorManager.cpp
     src/solver/FactorPreconditioner.cpp       src/solver/SolverError.cpp
@@ -151,6 +159,7 @@ set(SOLVER_SRC
 #===================================================================
 # Interface sources for CHOLMOD and CSparse
 #===================================================================
+
 set(CHOLMOD_INTERFACE_SRC
     src/library_interface/CHOLMOD_Environment.cpp
     src/library_interface/CHOLMOD_Supernodal.cpp)
@@ -163,6 +172,7 @@ set(CSPARSE_INTERFACE_SRC
 # Symbolic factorization/reordering sources (depends on CHOLMOD
 # and CSparse)
 #===================================================================
+
 set(ORDERING_SRC
     src/ordering/MinimumDegree.cpp
     src/ordering/NestedDissection.cpp
@@ -172,6 +182,7 @@ set(ORDERING_SRC
 #===================================================================
 # Supernode sources
 #===================================================================
+
 set(NODE_SRC
     src/node/DiagonalBlock.cpp                src/node/Supernode.cpp)
 
@@ -179,6 +190,7 @@ set(NODE_SRC
 #===================================================================
 # Geometry sources
 #===================================================================
+
 set(GEOMETRY_SRC
     src/geometry/FiniteDifference.cpp)
 
@@ -186,6 +198,7 @@ set(GEOMETRY_SRC
 #===================================================================
 # Set up general includes
 #===================================================================
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}/src
@@ -194,6 +207,7 @@ include_directories(
   ${BLAS_INCLUDE_DIR}
   ${LAPACK_INCLUDE_DIR}
   ${CHOLMOD_INCLUDE_DIR})
+
 link_directories(${Boost_LIBRARY_DIRS}
                  ${CHOLMOD_LIBDIR}
                  ${MKL_LIBRARY_DIR})
@@ -202,24 +216,60 @@ link_directories(${Boost_LIBRARY_DIRS}
 # Configure header files
 #===================================================================
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
+
+#===================================================================
+# Build libraries
+#===================================================================
+
+add_library(rsclib SHARED
+  ${UTIL_SRC}              ${LINEAR_SRC}
+  ${SOLVER_SRC}            ${ORDERING_SRC}
+  ${NODE_SRC}              ${GEOMETRY_SRC}
+  ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
+
+target_link_libraries(rsclib
+  ${BLAS_LAPACK_LIBS}
+  ${CHOLMOD_LIBRARIES}
+  ${ZLIB_LIBRARIES})
 
 #===================================================================
 # Build executables
 #===================================================================
-if ( BUILD_PCG_SOLVER )
-  add_executable(pcg_solver
-                 src/pcg_solver.cpp
-                 ${UTIL_SRC}              ${LINEAR_SRC}
-                 ${SOLVER_SRC}            ${ORDERING_SRC}
-                 ${NODE_SRC}              ${GEOMETRY_SRC}
-                 ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
 
-  target_link_libraries(pcg_solver
+if ( BUILD_PCG_SOLVER )
+
+  add_executable(pcg_solver src/pcg_solver.cpp)
+
+  target_link_libraries(pcg_solver rsclib
     ${BLAS_LAPACK_LIBS}
     ${CHOLMOD_LIBRARIES}
     ${ZLIB_LIBRARIES})
 
 endif ( BUILD_PCG_SOLVER )
 
+#===================================================================
+# Build Cython interface
+#===================================================================
+
+# if ( BUILD_PCG_PYTHON )
+#   include(UseCython)
+
+#   set_source_files_properties(src/python/rchol.pyx
+#     PROPERTIES CYTHON_IS_CXX TRUE)
+
+#   cython_add_module(rchol
+#     src/python/rchol.pyx
+#     src/python/pcg_pysolver.cpp
+#     ${UTIL_SRC}              ${LINEAR_SRC}
+#     ${SOLVER_SRC}            ${ORDERING_SRC}
+#     ${NODE_SRC}              ${GEOMETRY_SRC}
+#     ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
+
+#   target_link_libraries(rchol
+#     ${BLAS_LAPACK_LIBS}
+#     ${CHOLMOD_LIBRARIES}
+#     ${ZLIB_LIBRARIES})
+
+# endif ( BUILD_PCG_PYTHON )

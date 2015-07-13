@@ -1,5 +1,5 @@
 
-PYTHON=~/local/anaconda/bin/python
+PYTHON=python
 UFBASE=http://www.cise.ufl.edu/research/sparse/mat
 RUNNER=$(PYTHON) runner.py
 CSUB=csub -f pac.txt $(RUNNER) run

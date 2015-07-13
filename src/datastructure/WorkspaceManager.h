@@ -98,7 +98,7 @@ class Workspace {
 
 };
 
-#include "WorkspaceManager.cpp"
+#include <datastructure/WorkspaceManager.cpp>
 
 typedef Workspace<Real>      RealWorkspace;
 typedef Workspace<int>       IntWorkspace;

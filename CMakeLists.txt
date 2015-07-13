@@ -219,7 +219,12 @@ link_directories(${Boost_LIBRARY_DIRS}
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
 
-install(DIRECTORY src/ DESTINATION include/rsc FILES_MATCHING PATTERN "*.h")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/config.h
+        DESTINATION include/rsc)
+install(DIRECTORY src/ DESTINATION include/rsc
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY src/ DESTINATION include/rsc
+        FILES_MATCHING PATTERN "WorkspaceManager.*")
 
 #===================================================================
 # Build libraries

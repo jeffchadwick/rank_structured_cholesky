@@ -1,0 +1,14 @@
+#!/bin/bash
+
+PREFIX=$HOME/local
+BASEDIR=`echo $0 | sed 's/[^/]*$//'`
+BASEDIR=$BASEDIR..
+
+cmake \
+  -D USE_MKL:BOOL=OFF \
+  -D CMAKE_INCLUDE_PATH:PATH="$PREFIX/include" \
+  -D CMAKE_LIBRARY_PATH:PATH="$PREFIX/lib" \
+  -D CMAKE_INSTALL_PREFIX:PATH="$PREFIX/rsc" \
+  $BASEDIR
+
+make

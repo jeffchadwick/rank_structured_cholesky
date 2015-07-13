@@ -4,13 +4,13 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include <linearalgebra/PCG_SOLVER.h>
-#include <linearalgebra/SPARSE_MATRIX.h>
+#include <rschol/linearalgebra/PCG_SOLVER.h>
+#include <rschol/linearalgebra/SPARSE_MATRIX.h>
 
-#include <solver/FactorPreconditioner.h>
+#include <rschol/solver/FactorPreconditioner.h>
 
-#include <util/STLUtil.h>
-#include <util/timer.h>
+#include <rschol/util/STLUtil.h>
+#include <rschol/util/timer.h>
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////

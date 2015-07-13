@@ -132,18 +132,18 @@ endif ( USE_ZLIB )
 #===================================================================
 
 set(LINEAR_SRC
-    src/linearalgebra/MATRIX3.cpp
-    src/linearalgebra/MATRIX_FAST.cpp
-    src/linearalgebra/PCG_SOLVER.cpp
-    src/linearalgebra/SPARSE_MATRIX.cpp
-    src/linearalgebra/VECTOR_FAST.cpp)
+    src/rschol/linearalgebra/MATRIX3.cpp
+    src/rschol/linearalgebra/MATRIX_FAST.cpp
+    src/rschol/linearalgebra/PCG_SOLVER.cpp
+    src/rschol/linearalgebra/SPARSE_MATRIX.cpp
+    src/rschol/linearalgebra/VECTOR_FAST.cpp)
 
 #===================================================================
 # General utilities
 #===================================================================
 
 set(UTIL_SRC
-    src/util/MathUtil.cpp                     src/util/StatsCounter.cpp)
+    src/rschol/util/MathUtil.cpp                     src/rschol/util/StatsCounter.cpp)
 
 
 #===================================================================
@@ -151,9 +151,9 @@ set(UTIL_SRC
 #===================================================================
 
 set(SOLVER_SRC
-    src/solver/FactorManager.cpp
-    src/solver/FactorPreconditioner.cpp       src/solver/SolverError.cpp
-    src/solver/SparseSolver.cpp               src/solver/FactorPreconditioner.cpp)
+    src/rschol/solver/FactorManager.cpp
+    src/rschol/solver/FactorPreconditioner.cpp       src/rschol/solver/SolverError.cpp
+    src/rschol/solver/SparseSolver.cpp               src/rschol/solver/FactorPreconditioner.cpp)
 
 
 #===================================================================
@@ -161,11 +161,11 @@ set(SOLVER_SRC
 #===================================================================
 
 set(CHOLMOD_INTERFACE_SRC
-    src/library_interface/CHOLMOD_Environment.cpp
-    src/library_interface/CHOLMOD_Supernodal.cpp)
+    src/rschol/library_interface/CHOLMOD_Environment.cpp
+    src/rschol/library_interface/CHOLMOD_Supernodal.cpp)
 
 set(CSPARSE_INTERFACE_SRC
-    src/library_interface/CSparse_Interface.cpp)
+    src/rschol/library_interface/CSparse_Interface.cpp)
 
 
 #===================================================================
@@ -174,9 +174,9 @@ set(CSPARSE_INTERFACE_SRC
 #===================================================================
 
 set(ORDERING_SRC
-    src/ordering/MinimumDegree.cpp
-    src/ordering/NestedDissection.cpp
-    src/ordering/Ordering.cpp)
+    src/rschol/ordering/MinimumDegree.cpp
+    src/rschol/ordering/NestedDissection.cpp
+    src/rschol/ordering/Ordering.cpp)
 
 
 #===================================================================
@@ -184,7 +184,7 @@ set(ORDERING_SRC
 #===================================================================
 
 set(NODE_SRC
-    src/node/DiagonalBlock.cpp                src/node/Supernode.cpp)
+    src/rschol/node/DiagonalBlock.cpp                src/rschol/node/Supernode.cpp)
 
 
 #===================================================================
@@ -192,7 +192,7 @@ set(NODE_SRC
 #===================================================================
 
 set(GEOMETRY_SRC
-    src/geometry/FiniteDifference.cpp)
+    src/rschol/geometry/FiniteDifference.cpp)
 
 
 #===================================================================
@@ -200,8 +200,8 @@ set(GEOMETRY_SRC
 #===================================================================
 
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/
+  ${CMAKE_CURRENT_BINARY_DIR}/src/
   ${Boost_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIRS}
   ${BLAS_INCLUDE_DIR}
@@ -216,15 +216,28 @@ link_directories(${Boost_LIBRARY_DIRS}
 # Configure and install header files
 #===================================================================
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/config.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/src/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/rschol/config.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/rschol/config.h)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/config.h
-        DESTINATION include/rsc)
-install(DIRECTORY src/ DESTINATION include/rsc
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/rschol/config.h
+        DESTINATION include/rschol)
+install(DIRECTORY src/rschol/ 
+        DESTINATION include/rschol
         FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src/ DESTINATION include/rsc
-        FILES_MATCHING PATTERN "WorkspaceManager.*")
+install(DIRECTORY src/rschol/datastructure/ 
+        DESTINATION include/rschol/datastructure
+        FILES_MATCHING PATTERN "*.cpp")
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/python/setup.py.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/python/setup.py)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/python/build.sh.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/python/build.sh)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/rschol.pyx
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/pcg_pysolver.cpp
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/pcg_pysolver.h
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
 
 #===================================================================
 # Build libraries
@@ -273,12 +286,12 @@ endif ( BUILD_PCG_SOLVER )
 # if ( BUILD_PCG_PYTHON )
 #   include(UseCython)
 
-#   set_source_files_properties(src/python/rchol.pyx
+#   set_source_files_properties(src/rschol/python/rchol.pyx
 #     PROPERTIES CYTHON_IS_CXX TRUE)
 
 #   cython_add_module(rchol
-#     src/python/rchol.pyx
-#     src/python/pcg_pysolver.cpp
+#     src/rschol/python/rchol.pyx
+#     src/rschol/python/pcg_pysolver.cpp
 #     ${UTIL_SRC}              ${LINEAR_SRC}
 #     ${SOLVER_SRC}            ${ORDERING_SRC}
 #     ${NODE_SRC}              ${GEOMETRY_SRC}

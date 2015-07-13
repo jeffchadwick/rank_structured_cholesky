@@ -17,6 +17,23 @@ option(USE_OPENMP "Turn on the OpenMP feature when compiling" ON)
 #option(USE_64BIT_ARCH "Compile the 64bit executable" OFF)
 
 #===================================================================
+# RPATH management
+
+SET(MACOSX_RPATH TRUE)
+SET(CMAKE_MACOSX_RPATH TRUE)
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# the RPATH to be used when installing, but only if it's not a system directory
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
+ 
+
+#===================================================================
 ## Compiler
 # set compiler flags for debug/release
 
@@ -260,12 +277,6 @@ install(TARGETS rsclib LIBRARY DESTINATION lib)
 #===================================================================
 # Build executables
 #===================================================================
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 
 if ( BUILD_PCG_SOLVER )
 

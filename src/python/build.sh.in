@@ -1,2 +1,0 @@
-python setup.py build_ext --rpath=@CMAKE_INSTALL_PREFIX@/lib
-python setup.py install --home=@CMAKE_INSTALL_PREFIX@

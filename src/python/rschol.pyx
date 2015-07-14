@@ -1,4 +1,4 @@
-cdef extern from "python/pcg_pysolver.h":
+cdef extern from "pcg_pysolver.h":
   int pcg_pysolver(const char* name)
 
 def run(name):

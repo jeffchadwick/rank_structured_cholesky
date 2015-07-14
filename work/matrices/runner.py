@@ -8,7 +8,8 @@ import scipy.io as sio
 import gzip
 
 
-BUILD_PATH="../../../../rsc-build"
+# BUILD_PATH="../../../../rsc-build"
+BUILD_PATH="/Users/dbindel/local/rsc/bin"
 
 
 def mat_to_bcsm(basename, write_rhs=True):

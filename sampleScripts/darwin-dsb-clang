@@ -9,6 +9,9 @@ cmake \
   -D CMAKE_INCLUDE_PATH:PATH="$PREFIX/include" \
   -D CMAKE_LIBRARY_PATH:PATH="$PREFIX/lib" \
   -D CMAKE_INSTALL_PREFIX:PATH="$PREFIX/rsc" \
+  -D BUILD_PCG_PYTHON:BOOL=ON \
+  -D PYTHON_LIBRARY:FILEPATH="$HOME/anaconda/lib/libpython3.4m.dylib" \
+  -D PYTHON_INCLUDE_DIR:PATH="$HOME/anaconda/include/python3.4m" \
   $BASEDIR
 
 make

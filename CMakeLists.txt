@@ -34,6 +34,12 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
  
 
 #===================================================================
+# Compilation options
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 11)
+
+#===================================================================
 ## Compiler
 # set compiler flags for debug/release
 
@@ -57,7 +63,7 @@ if ( USE_OPENMP )
   endif()
 endif ( USE_OPENMP )
 
-add_definitions("-std=c++0x")
+# add_definitions("-std=c++11")
 
 # check if we're using Intel's compiler
 if ( CMAKE_CXX_COMPILER MATCHES ".*icpc$" )
@@ -246,22 +252,11 @@ install(DIRECTORY src/rschol/datastructure/
         DESTINATION include/rschol/datastructure
         FILES_MATCHING PATTERN "*.cpp")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/python/setup.py.in
-               ${CMAKE_CURRENT_BINARY_DIR}/src/python/setup.py)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/python/build.sh.in
-               ${CMAKE_CURRENT_BINARY_DIR}/src/python/build.sh)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/rschol.pyx
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/pcg_pysolver.cpp
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/python/pcg_pysolver.h
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/src/python)
-
 #===================================================================
 # Build libraries
 #===================================================================
 
-add_library(rsclib SHARED
+add_library(rsclib STATIC
   ${UTIL_SRC}              ${LINEAR_SRC}
   ${SOLVER_SRC}            ${ORDERING_SRC}
   ${NODE_SRC}              ${GEOMETRY_SRC}
@@ -272,7 +267,7 @@ target_link_libraries(rsclib
   ${CHOLMOD_LIBRARIES}
   ${ZLIB_LIBRARIES})
 
-install(TARGETS rsclib LIBRARY DESTINATION lib)
+install(TARGETS rsclib ARCHIVE DESTINATION lib)
 
 #===================================================================
 # Build executables
@@ -295,24 +290,8 @@ endif ( BUILD_PCG_SOLVER )
 # Build Cython interface
 #===================================================================
 
-# if ( BUILD_PCG_PYTHON )
-#   include(UseCython)
-
-#   set_source_files_properties(src/rschol/python/rchol.pyx
-#     PROPERTIES CYTHON_IS_CXX TRUE)
-
-#   cython_add_module(rchol
-#     src/rschol/python/rchol.pyx
-#     src/rschol/python/pcg_pysolver.cpp
-#     ${UTIL_SRC}              ${LINEAR_SRC}
-#     ${SOLVER_SRC}            ${ORDERING_SRC}
-#     ${NODE_SRC}              ${GEOMETRY_SRC}
-#     ${CHOLMOD_INTERFACE_SRC} ${CSPARSE_INTERFACE_SRC})
-
-#   target_link_libraries(rchol
-#     ${BLAS_LAPACK_LIBS}
-#     ${CHOLMOD_LIBRARIES}
-#     ${ZLIB_LIBRARIES})
-
-# endif ( BUILD_PCG_PYTHON )
+if ( BUILD_PCG_PYTHON )
+  include(UseCython)
+  add_subdirectory(src/python)
+endif ( BUILD_PCG_PYTHON )
 

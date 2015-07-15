@@ -1107,6 +1107,7 @@ int MATRIX::qrPivot( Real *A, int *pivots, int nRows, int nCols,
   info = LAPACKE_dgeqp3( LAPACK_ROW_MAJOR, nRows, nCols, A, nCols,
                          pivots, extraData );
 #endif
+  return info;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -2040,6 +2041,7 @@ int MATRIX::LUsolve( const Real *A, const int *pivotData,
                          A, ldaA, pivotData,
                          B, ldaB );
 #endif
+  return info;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -3164,7 +3166,7 @@ void MATRIX::eigensystem2x2( const Real *matrix, Real *eigenvalues,
 //////////////////////////////////////////////////////////////////////
 void MATRIX::eigensystem3x3( Real *A, Real *eigenvalues, Real *eigenvectors )
 {
-	register int i, j, k, l;
+  int i, j, k, l;
 
   //float TOL = 1e-8f;
   //int MAX_SWEEPS = 500;

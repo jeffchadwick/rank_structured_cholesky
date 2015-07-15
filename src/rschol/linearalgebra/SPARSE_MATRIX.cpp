@@ -836,6 +836,7 @@ int SPARSE_MATRIX::matrixMultiply( const SparseColumnMatrix &A,
 #endif
     }
   }
+  return A._p[A._ncol];
 }
 
 //////////////////////////////////////////////////////////////////////

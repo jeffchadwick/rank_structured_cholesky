@@ -50,6 +50,7 @@ DiagonalBlock &DiagonalBlock::operator=( const DiagonalBlock &block )
 {
   clear();
   copy( block );
+  return *this;
 }
 
 //////////////////////////////////////////////////////////////////////

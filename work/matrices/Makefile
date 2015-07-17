@@ -1,7 +1,5 @@
 
 PYTHON=python
-export PYTHONPATH=$(HOME)/local/rsc/lib/python
-
 UFBASE=http://www.cise.ufl.edu/research/sparse/mat
 RUNNER=$(PYTHON) runner.py
 CSUB=csub -f pac.txt

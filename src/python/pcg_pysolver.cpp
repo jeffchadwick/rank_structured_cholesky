@@ -12,51 +12,16 @@
 #include <rschol/util/STLUtil.h>
 #include <rschol/util/timer.h>
 
-//////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////
-int pcg_pysolver( const char* basename )
+
+void pcg_pysolve(SPARSE_MATRIX::SparseColumnMatrix& AsparseCol,
+                 VECTOR& rhs,
+                 VECTOR& solution,
+                 Vector3Array& meshPositions,
+                 bool positionsFound = false)
 {
-  SPARSE_MATRIX::SparseColumnMatrix    AsparseCol;
-  VECTOR                               rhs;
-  VECTOR                               solution;
-  Vector3Array                         meshPositions;
   FactorPreconditioner                 factorPrecond;
 
   Timer                                solveTimer;
-
-  bool                                 positionsFound = false;
-
-  {
-    char buf[ 1024 ];
-    sprintf( buf, "%s_system.bcsm.gz", basename );
-    SPARSE_MATRIX::readFromBinaryGZ( AsparseCol, buf );
-  }
-
-  {
-    char buf[ 1024 ];
-    sprintf( buf, "%s_rhs.vector", basename );
-
-    rhs.read( buf );
-    solution.resizeAndWipe( rhs.size() );
-  }
-
-  {
-    char buf[ 1024 ];
-    sprintf( buf, "%s_meshPositions.dat", basename );
-
-    positionsFound = readVector( meshPositions, buf );
-
-    if ( !positionsFound ) {
-      // If we did not find anything here, just populate this array
-      // with a bunch of dummy positions
-      meshPositions.clear();
-      meshPositions.resize( AsparseCol._nrow, VEC3F( 0.0, 0.0, 0.0 ) );
-
-      cerr << "Warning: no system degree of freedom positions found - "
-              "using default separator ordering" << endl;
-    }
-  }
-
   solveTimer.tick();
 
   factorPrecond.initialize( AsparseCol, meshPositions,
@@ -79,6 +44,25 @@ int pcg_pysolver( const char* basename )
   solveTimer.tock();
 
   printf( "\nPCG solution took %f seconds\n", solveTimer.getTotalSecs() );
+}
 
-  return 0;
+
+void pcg_pysolve(int nrow, const int* jc, const int* ir, const double* pr,
+                 const double* rhs, double* solution)
+{
+    SPARSE_MATRIX::SparseColumnMatrix A;
+    Vector3Array meshPositions;
+    A._nrow = nrow;
+    A._ncol = nrow;
+    A._nzmax = jc[nrow];
+    A.allocate();
+    std::copy(jc, jc+nrow+1, A._p);
+    std::copy(ir, ir+A._nzmax, A._i);
+    std::copy(pr, pr+A._nzmax, A._x);
+    meshPositions.clear();
+    meshPositions.resize(nrow, VEC3F( 0.0, 0.0, 0.0 ) );
+    VECTOR v(nrow, (double*) rhs);
+    VECTOR s(nrow);
+    pcg_pysolve(A, v, s, meshPositions);
+    std::copy(s.data(), s.data()+nrow, solution);
 }

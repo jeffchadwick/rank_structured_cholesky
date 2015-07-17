@@ -292,6 +292,8 @@ endif ( BUILD_PCG_SOLVER )
 
 if ( BUILD_PCG_PYTHON )
   include(UseCython)
+  find_package(NumPy)
+  include_directories(${PYTHON_NUMPY_INCLUDE_DIR})
   add_subdirectory(src/python)
 endif ( BUILD_PCG_PYTHON )
 

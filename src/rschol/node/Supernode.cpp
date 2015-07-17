@@ -165,8 +165,8 @@ void Supernode::constructScatteredMap( IntArray &scatteredMap,
         dataRow++;
       }
     }
-    else if ( _offDiagonal[ interaction_idx ]._type == STANDARD_NODE
-           && !_offDiagonal[ interaction_idx ]._active
+    else if ( (_offDiagonal[ interaction_idx ]._type == STANDARD_NODE
+               && !_offDiagonal[ interaction_idx ]._active)
            || _offDiagonal[ interaction_idx ]._type == COMPRESSED_NODE )
     {
       // Add entries to the low-rank scattered map for these indices
@@ -222,8 +222,8 @@ void Supernode::clearScatteredMap( IntArray &scatteredMap,
         scatteredMap[ startColumn + rowList[ row_idx ] ] = -1;
       }
     }
-    else if ( _offDiagonal[ interaction_idx ]._type == STANDARD_NODE
-           && !_offDiagonal[ interaction_idx ]._active
+    else if ( (_offDiagonal[ interaction_idx ]._type == STANDARD_NODE
+               && !_offDiagonal[ interaction_idx ]._active)
            || _offDiagonal[ interaction_idx ]._type == COMPRESSED_NODE )
     {
       // Add entries to the low-rank scattered map for these indices
@@ -1607,7 +1607,7 @@ void Supernode::getLowRankBlocks( IntArray &lowRankBlocks,
   {
     const SupernodeInteraction  &interaction = _offDiagonal[ interaction_idx ];
 
-    if ( interaction._type == STANDARD_NODE && !interaction._active
+    if ( (interaction._type == STANDARD_NODE && !interaction._active)
       || interaction._type == COMPRESSED_NODE )
     {
       lowRankBlocks.push_back( interaction_idx );
@@ -3217,7 +3217,7 @@ void Supernode::lowRankQR( const IntArray &lowRankBlocks,
 
     const SupernodeInteraction  &interaction = _offDiagonal[ interaction_idx ];
 
-    if ( interaction._type == STANDARD_NODE && !interaction._active
+    if ( (interaction._type == STANDARD_NODE && !interaction._active)
       || interaction._type == COMPRESSED_NODE )
     {
       // We are replacing this node with slack variables, so we
@@ -3944,6 +3944,7 @@ void Supernode::expandCompressedInteractions(
 
     const SupernodeInteraction &interaction = _offDiagonal[ interaction_idx ];
 
+    // DSB: Is ! right?
     if ( !interaction._type == EXTENDED_NODE || !interaction._compressed )
     {
       continue;
@@ -4576,8 +4577,8 @@ void Supernode::forwardSolve( Real *x,
     //
     // If it is for an extended node, we can copy the full block of
     // data corresponding to this extended node.
-    if ( interaction._type == STANDARD_NODE && interaction._active
-      || interaction._type == COMPRESSED_NODE && _compressedRank > 0 ) {
+    if ( (interaction._type == STANDARD_NODE && interaction._active)
+      || (interaction._type == COMPRESSED_NODE && _compressedRank > 0) ) {
 #if 0
 #ifdef INTERIOR_SOLVE_TIMING
       TIMING_STOP( "Forward solve (other):" );
@@ -4833,8 +4834,8 @@ void Supernode::forwardSolve( Real *x,
   {
     const SupernodeInteraction  &interaction = _offDiagonal[ interaction_idx ];
 
-    if ( interaction._type == STANDARD_NODE && interaction._active 
-      || interaction._type == COMPRESSED_NODE && _compressedRank > 0 ) {
+    if ( (interaction._type == STANDARD_NODE && interaction._active)
+         || (interaction._type == COMPRESSED_NODE && _compressedRank > 0) ) {
       for ( int row_idx = 0; row_idx < interaction._rowList.size(); row_idx++ ) {
         systemRow = nodes[ interaction._nodeID ]._columnRange.first
                   + interaction._rowList[ row_idx ];
@@ -4928,8 +4929,8 @@ void Supernode::backwardSolve( Real *x,
   {
     const SupernodeInteraction  &interaction = _offDiagonal[ interaction_idx ];
 
-    if ( interaction._type == STANDARD_NODE && interaction._active 
-      || interaction._type == COMPRESSED_NODE && _compressedRank > 0 ) {
+    if ( (interaction._type == STANDARD_NODE && interaction._active )
+         || (interaction._type == COMPRESSED_NODE && _compressedRank > 0) ) {
 #if 0
 #ifdef INTERIOR_SOLVE_TIMING
       TIMING_START( "Backward solve standard copy" );
